@@ -2,9 +2,14 @@
 
 This folder contains notes and exercises for hardening Linux systems to improve security.
 
-Topics include:
-- SSH hardening
+## Topics
+
+- SSH hardening (disable root login, key authentication)
 - User and group management
-- Firewall configuration
 - File permissions and ownership
-- Logging and monitoring
+- Firewall configuration (iptables, firewalld)
+- Logging and monitoring (auditd, systemd-journald)
+- Package updates and vulnerability management
+
+> Exercises here should be performed in lab environments.# Linux Hardening
+
