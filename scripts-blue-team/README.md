@@ -39,3 +39,17 @@ This Python script parses authentication logs to count failed SSH login attempts
 ### Notes
 - Designed for educational use
 - Log file path may vary between systems
+
+## Logged Users Monitor
+
+**File:** `logged_users_monitor.sh`
+
+This script displays currently logged-in users and session details.
+
+### Purpose
+- Identify active sessions
+- Support incident investigation and anomaly detection
+
+### Notes
+- Uses standard Linux commands
+- Intended for monitoring and awareness
