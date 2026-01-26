@@ -53,3 +53,17 @@ This script displays currently logged-in users and session details.
 ### Notes
 - Uses standard Linux commands
 - Intended for monitoring and awareness
+
+## Security Daily Report
+
+**File:** `security_daily_report.sh`
+
+Generates a simple daily security report including:
+- Logged-in users
+- Recent SSH failed logins
+- File integrity status
+
+### Purpose
+- SOC daily checks
+- Incident response support
+- System visibility
