@@ -25,3 +25,17 @@ This Bash script parses authentication logs to identify IP addresses with multip
 ### Notes
 - Designed for educational use
 - Log file path may vary between distributions
+
+## Python SSH Log Parser
+
+**File:** `ssh_log_parser.py`
+
+This Python script parses authentication logs to count failed SSH login attempts by IP.
+
+### Purpose
+- Improve log readability
+- Demonstrate defensive automation using Python
+
+### Notes
+- Designed for educational use
+- Log file path may vary between systems
