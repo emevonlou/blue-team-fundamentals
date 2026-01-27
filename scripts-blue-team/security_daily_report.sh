@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Must be run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Error: this script must be run as root to access all security data."
+    exit 1
+fi
+
+# Required commands check
+for cmd in journalctl sha256sum who hostname date; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: required command '$cmd' not found."
+        exit 1
+    fi
+done
+
 REPORT_DIR="../reports"
 REPORT_DATE=$(date +%F)
 HOSTNAME=$(hostname)
@@ -34,6 +48,9 @@ fi
 
 echo >> "$REPORT_FILE"
 echo "End of report." >> "$REPORT_FILE"
+
+# Report retention: keep only last 7 days
+find "$REPORT_DIR" -type f -name "security_report_*.txt" -mtime +7 -exec rm -f {} \;
 
 echo "Report saved to $REPORT_FILE"
 
