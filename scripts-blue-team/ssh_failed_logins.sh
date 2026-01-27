@@ -1,19 +1,21 @@
 #!/bin/bash
 
-# Simple SSH failed login detector
-# This script counts failed SSH login attempts from auth logs
+SERVICE="sshd"
+LOG_CMD="journalctl -u $SERVICE --no-pager"
 
-LOG_FILE="/var/log/auth.log"
-
-if [ ! -f "$LOG_FILE" ]; then
-  echo "Log file not found. Are you running this on a Debian-based system?"
-  exit 1
+if ! command -v journalctl &> /dev/null; then
+    echo "Error: journalctl not found. This system may not use systemd."
+    exit 1
 fi
 
-echo "Analyzing SSH failed login attempts..."
-echo
+echo "Checking SSH failed login attempts..."
+echo "----------------------------------"
 
-grep "Failed password" "$LOG_FILE" | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head
+FAILED_LOGINS=$($LOG_CMD | grep -i "failed password")
 
-echo
-echo "Done. Review IPs with high failure counts."
+if [ -z "$FAILED_LOGINS" ]; then
+    echo "No failed SSH login attempts found."
+else
+    echo "$FAILED_LOGINS" | tail -n 10
+fi
+
