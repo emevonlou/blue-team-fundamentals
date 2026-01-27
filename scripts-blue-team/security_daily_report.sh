@@ -1,12 +1,16 @@
 #!/bin/bash
 
-REPORT_DATE=$(date)
+REPORT_DIR="../reports"
+REPORT_DATE=$(date +%F)
 HOSTNAME=$(hostname)
-REPORT_FILE="security_report_$(date +%F).txt"
+REPORT_FILE="$REPORT_DIR/security_report_$REPORT_DATE.txt"
+
+# Ensure report directory exists
+mkdir -p "$REPORT_DIR"
 
 echo "Security Daily Report" > "$REPORT_FILE"
 echo "=====================" >> "$REPORT_FILE"
-echo "Date: $REPORT_DATE" >> "$REPORT_FILE"
+echo "Date: $(date)" >> "$REPORT_FILE"
 echo "Host: $HOSTNAME" >> "$REPORT_FILE"
 echo >> "$REPORT_FILE"
 
@@ -17,7 +21,7 @@ echo >> "$REPORT_FILE"
 
 echo "SSH failed login attempts (last 10):" >> "$REPORT_FILE"
 echo "-----------------------------------" >> "$REPORT_FILE"
-journalctl -u sshd | grep "Failed password" | tail -n 10 >> "$REPORT_FILE"
+journalctl -u sshd --no-pager | grep -i "failed password" | tail -n 10 >> "$REPORT_FILE"
 echo >> "$REPORT_FILE"
 
 echo "File integrity status:" >> "$REPORT_FILE"
@@ -31,4 +35,5 @@ fi
 echo >> "$REPORT_FILE"
 echo "End of report." >> "$REPORT_FILE"
 
-echo "Report generated: $REPORT_FILE"
+echo "Report saved to $REPORT_FILE"
+
