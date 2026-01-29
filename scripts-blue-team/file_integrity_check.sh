@@ -31,7 +31,6 @@ if [ ! -f "$INTEGRITY_DB" ]; then
 fi
 
 # Verify integrity
-echo "Verifying file integrity..."
 RESULT=$(sha256sum -c "$INTEGRITY_DB" 2>/dev/null)
 
 CHANGES=$(echo "$RESULT" | grep -v "OK$")
@@ -39,8 +38,11 @@ CHANGES=$(echo "$RESULT" | grep -v "OK$")
 if [ -z "$CHANGES" ]; then
     echo "All monitored files are intact."
 else
-    echo "WARNING: File integrity changes detected!"
-    echo "-----------------------------------------"
-    echo "$CHANGES"
+    echo "⚠️  Integrity changes detected!"
+    echo "--------------------------------"
+    echo "$CHANGES" | while read line; do
+        FILE=$(echo "$line" | cut -d ':' -f 1)
+        echo "Modified file: $FILE"
+    done
 fi
 
