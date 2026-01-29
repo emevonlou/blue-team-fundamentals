@@ -2,6 +2,7 @@
 
 INTEGRITY_DB="integrity_db.sha256"
 TARGET_DIR="/etc"
+WHITELIST="integrity_whitelist.txt"
 
 # Must be run as root
 if [ "$EUID" -ne 0 ]; then
@@ -38,11 +39,16 @@ CHANGES=$(echo "$RESULT" | grep -v "OK$")
 if [ -z "$CHANGES" ]; then
     echo "All monitored files are intact."
 else
-    echo "⚠️  Integrity changes detected!"
+    echo "Integrity changes detected!"
     echo "--------------------------------"
     echo "$CHANGES" | while read line; do
         FILE=$(echo "$line" | cut -d ':' -f 1)
-        echo "Modified file: $FILE"
+
+        if [ -f "$WHITELIST" ] && grep -qx "$FILE" "$WHITELIST"; then
+            echo "Ignored (whitelisted): $FILE"
+        else
+            echo "Modified file: $FILE"
+        fi
     done
 fi
 

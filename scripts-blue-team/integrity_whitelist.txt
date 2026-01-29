@@ -1,0 +1,5 @@
+/etc/mtab
+/etc/hosts
+/etc/cups/subscriptions.conf
+/etc/cups/subscriptions.conf.O
+
