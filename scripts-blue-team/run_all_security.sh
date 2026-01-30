@@ -54,6 +54,10 @@ else
   ok "Security routine completed successfully."
 fi
 
+echo ""
+echo "[BONUS] Generating Master Report..."
+sudo ./daily_master_report.sh
+
 echo "Completed at $(date)"
 echo "=============================="
 
