@@ -15,5 +15,13 @@ journalctl -u sshd | grep "Invalid user" >> "$REPORT"
 echo "" >> "$REPORT"
 echo "Report generated at $(date)" >> "$REPORT"
 
+CSV="../reports/auth_summary_$(date +%Y-%m-%d).csv"
+
+echo "date,failed_attempts" > "$CSV"
+COUNT=$(journalctl -u sshd | grep "Failed password" | wc -l)
+echo "$(date +%Y-%m-%d),$COUNT" >> "$CSV"
+
+echo "CSV summary saved to $CSV"
+
 echo "Auth report saved to $REPORT"
 
