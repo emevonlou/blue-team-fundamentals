@@ -9,6 +9,17 @@ echo "Failed login attempts:" >> "$REPORT"
 journalctl -u sshd | grep "Failed password" >> "$REPORT"
 
 echo "" >> "$REPORT"
+echo "Top Failed IPs:" >> "$REPORT"
+
+journalctl -u sshd \
+| grep "Failed password" \
+| awk '{print $(NF-3)}' \
+| sort \
+| uniq -c \
+| sort -nr \
+| head -5 >> "$REPORT"
+
+echo "" >> "$REPORT"
 echo "Invalid users:" >> "$REPORT"
 journalctl -u sshd | grep "Invalid user" >> "$REPORT"
 
