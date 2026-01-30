@@ -8,6 +8,14 @@ system monitoring, log analysis, and defensive security automation.
 - Build security monitoring scripts used in SOC environments
 - Demonstrate secure scripting and operational awareness
 
+## Quick Start
+
+Run the full daily security routine:
+
+```bash
+cd scripts-blue-team
+./run_all_security.sh
+
 ## Repository Structure
 scripts-blue-team/
 Bash scripts for system monitoring and integrity checks
