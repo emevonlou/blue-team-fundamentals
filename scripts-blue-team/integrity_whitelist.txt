@@ -5,3 +5,4 @@
 /etc/ld.so.cache
 
 
+/etc/default/google-chrome
