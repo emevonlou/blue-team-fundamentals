@@ -48,7 +48,23 @@ else
             echo "Ignored (whitelisted): $FILE"
         else
             echo "Modified file: $FILE"
-        fi
+
+# Exit code hardening:
+# 0 = clean or whitelisted-only changes
+# 2 = non-whitelisted changes detected
+if echo "$CHANGES" | cut -d ':' -f 1 | while read f; do
+    if [ -f "$WHITELIST" ] && grep -qx "$f" "$WHITELIST"; then
+        true
+    else
+        echo "$f"
+    fi
+done | grep -q .; then
+    exit 2
+else
+    exit 0
+fi
+
+     fi
     done
 fi
 
