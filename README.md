@@ -1,5 +1,8 @@
 # Blue Team Fundamentals
 
+**Status:** Operational
+**Latest release:** v1.0.1 (hardening update)
+
 This repository demonstrates foundational Blue Team practices focused on
 system monitoring, log analysis, and defensive security automation.
 
