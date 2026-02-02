@@ -1,7 +1,7 @@
 # Blue Team Fundamentals
 
 **Status:** Operational
-**Latest release:** v1.0.1 (hardening update)
+**Latest release:** v1.0.2 (automation + dashboard)
 
 This repository demonstrates foundational Blue Team practices focused on
 system monitoring, log analysis, and defensive security automation.
@@ -20,29 +20,22 @@ cd scripts-blue-team
 ./run_all_security.sh
 
 ## Repository Structure
-scripts-blue-team/
-Bash scripts for system monitoring and integrity checks
 
-python-tools/
-Python scripts for log analysis and automation
-
-reports/
-Generated daily security reports
-
-docs/
-Threat modeling and documentation
+- `scripts-blue-team/` — Bash scripts for monitoring + checks  
+- `python-tools/` — Dashboard + analysis tooling  
+- `docs/` — Documentation, incident sims, notes  
+- `reports/` — Generated reports (not tracked)
 
 ## Key Features
 - SSH failed login monitoring
-- File integrity checking with protected hash database
-- Logged-in user monitoring
-- Automated daily security reports with retention policy
-- Threat model documentation
+- File integrity checking with whitelist + exit codes
+- Service health checks
+- Daily master report generation
+- Dashboard (PNG + HTML)
 
 ## Security Considerations
-- Scripts validate dependencies before execution
-- Sensitive operations require elevated privileges
-- Integrity databases are protected with strict permissions
+- Minimal privilege: sudo restricted to required scripts
+- Reports are local and not tracked
 - Fail-fast behavior to avoid silent errors
 
 ## Disclaimer
