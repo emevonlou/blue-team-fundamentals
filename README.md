@@ -1,7 +1,10 @@
 # Blue Team Fundamentals
 
+**Installable agent:** CLI + systemd automation  
+**Use case:** Daily Linux Blue Team routine with reports and dashboard
+
 **Status:** Operational
-**Latest release:** v1.0.2 (automation + dashboard)
+**Latest release:** v1.0.3 Product Packaging & Installer
 
 This repository demonstrates foundational Blue Team practices focused on
 system monitoring, log analysis, and defensive security automation.
@@ -18,6 +21,9 @@ Run the full daily security routine:
 ```bash
 cd scripts-blue-team
 ./run_all_security.sh
+
+## Dashboard Preview
+![Dashboard preview](assets/dashboard_preview.png)
 
 ## Repository Structure
 
