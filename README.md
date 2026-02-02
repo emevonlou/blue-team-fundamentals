@@ -46,5 +46,9 @@ blueteam status
 cd scripts-blue-team
 ./run_all_security.sh
 
+## Dashboard Preview
+
+![Dashboard preview](assets/dashboard_preview.png)
+
 
 
