@@ -16,12 +16,6 @@
 - CSV summaries enable trend analysis and future dashboards
 - A master report provides an executive daily view
 
-## How to explain this project in an interview
-This project simulates a daily Blue Team security routine on a Linux system.
-It performs integrity checks, authentication log analysis, and service health
-verification, generating structured reports for review.
 
-## Example SOC-style statements
-- “Not every alert is malicious; I triage events by context.”
-- “I focus on reducing false positives without weakening detection.”
-- “I validate detections using controlled simulations and document lessons learned.”
+
+
