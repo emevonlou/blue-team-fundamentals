@@ -1,0 +1,10 @@
+[Unit]
+Description=Blue Team Daily Security Run + Dashboard
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/github-projects/blue-team-fundamentals/scripts-blue-team
+ExecStart=/usr/bin/bash -lc '%h/github-projects/blue-team-fundamentals/scripts-blue-team/run_all_security.sh'
+ExecStartPost=/usr/bin/bash -lc '%h/github-projects/blue-team-fundamentals/python-tools/auth_dashboard.py'
