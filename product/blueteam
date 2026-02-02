@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime
+
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config", "blueteam", "config.json")
+
+def load_repo_root():
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        rr = data.get("repo_root")
+        if rr and os.path.isdir(rr):
+            return rr
+    except Exception:
+        pass
+    # fallback: assume dev mode (running from repo)
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+REPO_ROOT = load_repo_root()
+SCRIPTS_DIR = os.path.join(REPO_ROOT, "scripts-blue-team")
+PYTOOLS_DIR = os.path.join(REPO_ROOT, "python-tools")
+REPORTS_DIR = os.path.join(REPO_ROOT, "reports")
+
+
+RUNNER = os.path.join(SCRIPTS_DIR, "run_all_security.sh")
+DASH = os.path.join(PYTOOLS_DIR, "auth_dashboard.py")
+LAST_RUN = os.path.join(REPORTS_DIR, "last_run.json")
+
+def sh(cmd, cwd=None, check=True):
+    return subprocess.run(cmd, cwd=cwd, check=check, text=True, capture_output=True)
+
+def ensure_paths():
+    for p in [SCRIPTS_DIR, PYTOOLS_DIR, REPORTS_DIR]:
+        os.makedirs(p, exist_ok=True)
+
+def write_last_run(result: dict):
+    ensure_paths()
+    result["timestamp"] = datetime.now().isoformat(timespec="seconds")
+    with open(LAST_RUN, "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2)
+
+def cmd_run(_args):
+    ensure_paths()
+
+    # Run the routine (runner uses sudo inside; systemd automation handles sudoers)
+    rc = 0
+    out = ""
+    err = ""
+    try:
+        p = subprocess.run(["/usr/bin/bash", "-lc", RUNNER], cwd=SCRIPTS_DIR, text=True, capture_output=True)
+        rc = p.returncode
+        out = p.stdout.strip()
+        err = p.stderr.strip()
+    except Exception as e:
+        write_last_run({"ok": False, "runner_rc": 99, "error": str(e)})
+        print(f"[ERR] Failed to run routine: {e}", file=sys.stderr)
+        return 99
+
+    # Generate dashboard (best-effort)
+    dash_ok = True
+    dash_msg = ""
+    try:
+        p2 = subprocess.run(["/usr/bin/bash", "-lc", DASH], cwd=PYTOOLS_DIR, text=True, capture_output=True)
+        dash_msg = (p2.stdout + "\n" + p2.stderr).strip()
+        if p2.returncode != 0:
+            dash_ok = False
+    except Exception as e:
+        dash_ok = False
+        dash_msg = str(e)
+
+    # Interpret runner status
+    # Convention: rc==0 success, rc!=0 means findings or script error
+    status = "OK" if rc == 0 else "CRIT"
+    write_last_run({
+        "ok": (rc == 0),
+        "status": status,
+        "runner_rc": rc,
+        "dashboard_ok": dash_ok,
+        "dashboard_msg": dash_msg[-500:],
+        "stdout_tail": out[-1500:],
+        "stderr_tail": err[-1500:],
+    })
+
+    print(out)
+    if err:
+        print("\n[stderr]\n" + err, file=sys.stderr)
+
+    print(f"\n[blueteam] status={status} rc={rc}")
+    print(f"[blueteam] last_run.json -> {LAST_RUN}")
+    return rc
+
+def cmd_status(_args):
+    if not os.path.exists(LAST_RUN):
+        print("No last_run.json found yet. Run: blueteam run")
+        return 1
+    with open(LAST_RUN, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    print("BlueTeam Status")
+    print("--------------")
+    print(f"Timestamp : {data.get('timestamp','?')}")
+    print(f"Status    : {data.get('status','?')}")
+    print(f"Runner RC : {data.get('runner_rc','?')}")
+    print(f"Dashboard : {'OK' if data.get('dashboard_ok') else 'FAIL'}")
+    return 0
+
+def cmd_dashboard(_args):
+    # Generate and open dashboard
+    p = subprocess.run(["/usr/bin/bash", "-lc", DASH], cwd=PYTOOLS_DIR, text=True, capture_output=True)
+    print(p.stdout.strip())
+    if p.stderr.strip():
+        print(p.stderr.strip(), file=sys.stderr)
+
+    html = os.path.join(REPORTS_DIR, "dashboard_auth.html")
+    if os.path.exists(html):
+        subprocess.run(["xdg-open", html], check=False)
+        print(f"Opened: {html}")
+        return p.returncode
+    print("Dashboard HTML not found in reports/.")
+    return 1
+
+def cmd_enable(_args):
+    # Enable the systemd user timer
+    sh(["systemctl", "--user", "daemon-reload"], check=False)
+    sh(["systemctl", "--user", "enable", "--now", "blue-team.timer"], check=False)
+    print("Enabled: blue-team.timer")
+    return 0
+
+def cmd_disable(_args):
+    sh(["systemctl", "--user", "disable", "--now", "blue-team.timer"], check=False)
+    print("Disabled: blue-team.timer")
+    return 0
+
+def cmd_logs(_args):
+    p = subprocess.run(["journalctl", "--user", "-u", "blue-team.service", "--no-pager", "-n", "120"], text=True)
+    return p.returncode
+
+def main():
+    ap = argparse.ArgumentParser(prog="blueteam", description="Blue Team Fundamentals - product CLI")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("run")
+    sub.add_parser("status")
+    sub.add_parser("dashboard")
+    sub.add_parser("enable")
+    sub.add_parser("disable")
+    sub.add_parser("logs")
+
+    args = ap.parse_args()
+
+    if args.cmd == "run":
+        return cmd_run(args)
+    if args.cmd == "status":
+        return cmd_status(args)
+    if args.cmd == "dashboard":
+        return cmd_dashboard(args)
+    if args.cmd == "enable":
+        return cmd_enable(args)
+    if args.cmd == "disable":
+        return cmd_disable(args)
+    if args.cmd == "logs":
+        return cmd_logs(args)
+
+    return 2
+
+if __name__ == "__main__":
+    raise SystemExit(main())
