@@ -49,6 +49,27 @@ cd scripts-blue-team
 ./run_all_security.sh
 ```
 
+## Install via RPM (Fedora)
+
+A prebuilt RPM package is available in the GitHub Releases section.
+
+### Install
+```bash
+sudo dnf install ./blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
+ 
+blueteam run
+blueteam status
+```
+# Enable daily automation
+```bash
+systemctl --user enable --now blue-team.timer
+```
+
+Note: The RPM installs files under /opt/blueteam and exposes the CLI via /usr/bin/blueteam.
+
+
+
+
 ## Dashboard Preview
 
 ![Dashboard preview](assets/dashboard_preview.png)
