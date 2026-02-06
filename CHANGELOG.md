@@ -16,6 +16,15 @@ operational Blue Team workflows, automation, and signal over noise.
 - Improved README with product-focused Quick Start
 - Added dashboard preview image
 - Minor documentation fixes and polish
+- 
+### Added
+- Product installer (`product/install.sh`)
+- Systemd user service unit template
+- Product quickstart documentation
+
+### Notes
+- CLI reads repo_root from `~/.config/blueteam/config.json`
+- Reports remain local in `reports/`
 
 ---
 
