@@ -60,7 +60,7 @@ sudo dnf install ./blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
 blueteam run
 blueteam status
 ```
-# Enable daily automation
+### Enable daily automation
 ```bash
 systemctl --user enable --now blue-team.timer
 ```
