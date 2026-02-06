@@ -41,6 +41,7 @@ with an emphasis on signal over noise, least privilege, and operational clarity.
 blueteam run
 blueteam enable
 blueteam status
+```
 
 ### Run once (manual)
 ```bash
