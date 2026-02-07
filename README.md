@@ -43,20 +43,20 @@ blueteam enable
 blueteam status
 ```
 ##Run once (manual)
+
 cd scripts-blue-team
 ./run_all_security.sh
 
 ## Install via RPM (Fedora)
 
-A prebuilt RPM package is available in the GitHub Releases section.
+Download the **GPG-signed** RPM from GitHub Releases.
 
-### Install
+### Verify signature
+
 ```bash
-sudo dnf install ./blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
- 
-blueteam run
-blueteam status
-```
+sudo rpm --import docs/blueteam-rpm-publickey.asc
+rpm -Kv blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
+
 ### Verify RPM signature
 
 ```bash
@@ -64,15 +64,18 @@ sudo rpm --import docs/blueteam-rpm-publickey.asc
 rpm -Kv blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
 ```
 
-### Enable daily automation
+###Install
+
 ```bash
-systemctl --user enable --now blue-team.timer
+sudo dnf install ./blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
 ```
 
-Note: The RPM installs files under /opt/blueteam and exposes the CLI via /usr/bin/blueteam.
+### Enable daily automation
 
-
-
+```bash
+systemctl --user enable --now blue-team.timer
+systemctl --user list-timers | grep blue-team
+```
 
 ## Dashboard Preview
 
