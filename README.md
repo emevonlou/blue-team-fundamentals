@@ -42,12 +42,9 @@ blueteam run
 blueteam enable
 blueteam status
 ```
-
-### Run once (manual)
-```bash
+##Run once (manual)
 cd scripts-blue-team
 ./run_all_security.sh
-```
 
 ## Install via RPM (Fedora)
 
