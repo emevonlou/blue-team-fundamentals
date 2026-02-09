@@ -8,18 +8,30 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: scripts-blue-team
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: ShellCheck (scripts-blue-team)
+        run: |
+          set -euo pipefail
+          echo "Running ShellCheck..."
+          # List scripts for visibility
+          find scripts-blue-team -type f -name "*.sh" -print
+          # Run shellcheck (fail on findings)
+          find scripts-blue-team -type f -name "*.sh" -print0 | xargs -0 -r shellcheck
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - name: Python syntax check
+      - name: Python syntax check (compileall)
         run: |
+          set -euo pipefail
           python -m compileall -q python-tools scripts-blue-team
+
