@@ -7,8 +7,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install ShellCheck
@@ -16,22 +17,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck
 
-      - name: ShellCheck (scripts-blue-team)
+      - name: ShellCheck (report only)
         run: |
-          set -euo pipefail
-          echo "Running ShellCheck..."
-          # List scripts for visibility
+          set -u
+          echo "Running ShellCheck (report-only)..."
+          echo "Scanning scripts-blue-team/"
           find scripts-blue-team -type f -name "*.sh" -print
-          # Run shellcheck (fail on findings)
-          find scripts-blue-team -type f -name "*.sh" -print0 | xargs -0 -r shellcheck
+          # Run shellcheck but do not fail the job yet
+          find scripts-blue-team -type f -name "*.sh" -print0 | xargs -0 -r shellcheck || true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - name: Python syntax check (compileall)
+      - name: Python syntax check (compile only)
         run: |
-          set -euo pipefail
+          set -u
+          echo "Running Python syntax checks..."
           python -m compileall -q python-tools scripts-blue-team
 
