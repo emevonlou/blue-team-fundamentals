@@ -1,5 +1,7 @@
 # Blue Team Fundamentals
 
+[![CI](https://github.com/emevonlou/blue-team-fundamentals/actions/workflows/ci.yml/badge.svg)](https://github.com/emevonlou/blue-team-fundamentals/actions/workflows/ci.yml)
+
 **Installable agent:** CLI + systemd automation  
 **Use case:** Daily Linux Blue Team routine with reports and dashboard
 
