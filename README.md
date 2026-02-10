@@ -44,6 +44,15 @@ blueteam run
 blueteam enable
 blueteam status
 ```
+
+## Terminal UI
+
+- If you prefer a visual interface in the terminal:
+
+```bash
+blueteam ui
+```
+
 ##Run once (manual)
 
 cd scripts-blue-team
@@ -58,7 +67,7 @@ Download the **GPG-signed** RPM from GitHub Releases.
 ```bash
 sudo rpm --import docs/blueteam-rpm-publickey.asc
 rpm -Kv blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
-
+```
 ### Verify RPM signature
 
 ```bash

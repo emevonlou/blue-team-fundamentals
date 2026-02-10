@@ -85,6 +85,12 @@ def cmd_run(_args):
         "stderr_tail": err[-1500:],
     })
 
+    if getattr(_args, "json", False):
+        with open(LAST_RUN, "r", encoding="utf-8") as f:
+            print(f.read())
+        return rc
+
+
     print(out)
     if err:
         print("\n[stderr]\n" + err, file=sys.stderr)
@@ -94,9 +100,21 @@ def cmd_run(_args):
     return rc
 
 def cmd_status(_args):
+    # Machine-readable output for the TUI (and automation)
+    if getattr(_args, "json", False):
+        if not os.path.exists(LAST_RUN):
+            print(json.dumps({"status": "UNKNOWN", "timestamp": None}, indent=2))
+            return 0
+        with open(LAST_RUN, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        print(json.dumps(data, indent=2))
+        return 0
+
+    # Human-readable output
     if not os.path.exists(LAST_RUN):
         print("No last_run.json found yet. Run: blueteam run")
         return 1
+
     with open(LAST_RUN, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -107,6 +125,7 @@ def cmd_status(_args):
     print(f"Runner RC : {data.get('runner_rc','?')}")
     print(f"Dashboard : {'OK' if data.get('dashboard_ok') else 'FAIL'}")
     return 0
+
 
 def cmd_dashboard(_args):
     # Generate and open dashboard
@@ -139,16 +158,30 @@ def cmd_logs(_args):
     p = subprocess.run(["journalctl", "--user", "-u", "blue-team.service", "--no-pager", "-n", "120"], text=True)
     return p.returncode
 
+def cmd_ui(_args):
+    ui_path = os.path.join(PYTOOLS_DIR, "blueteam_ui.py")
+    if not os.path.exists(ui_path):
+        print("UI file not found:", ui_path)
+        raise SystemExit(1)
+
+    p = subprocess.run([sys.executable, ui_path])
+    raise SystemExit(p.returncode)
+
 def main():
     ap = argparse.ArgumentParser(prog="blueteam", description="Blue Team Fundamentals - product CLI")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("run")
-    sub.add_parser("status")
+    p_run = sub.add_parser("run")
+    p_run.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    
+    p_status = sub.add_parser("status")
+    p_status.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    
     sub.add_parser("dashboard")
     sub.add_parser("enable")
     sub.add_parser("disable")
     sub.add_parser("logs")
+    sub.add_parser("ui")
 
     args = ap.parse_args()
 
@@ -164,6 +197,9 @@ def main():
         return cmd_disable(args)
     if args.cmd == "logs":
         return cmd_logs(args)
+    if args.cmd == "ui":
+        return cmd_ui(args)
+
 
     return 2
 
