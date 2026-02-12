@@ -83,6 +83,7 @@ def cmd_run(_args):
         status = "WARN"
     else:
         status = "CRIT"
+    
     write_last_run({
         "ok": (rc == 0),
         "status": status,
@@ -117,6 +118,38 @@ def cmd_status(_args):
             data = json.load(f)
         print(json.dumps(data, indent=2))
         return 0
+    
+    # Human output (with colors)
+    if not os.path.exists(LAST_RUN):
+        print("No last_run.json found yet. Run: blueteam run")
+        return 1
+
+    with open(LAST_RUN, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    status = data.get("status", "?")
+
+    # ANSI colors only when printing to a real terminal
+    use_color = sys.stdout.isatty()
+    if use_color:
+        if status == "OK":
+            color = "\033[92m"   # green
+        elif status == "WARN":
+            color = "\033[93m"   # yellow
+        else:
+            color = "\033[91m"   # red
+        reset = "\033[0m"
+    else:
+        color = ""
+        reset = ""
+
+    print("BlueTeam Status")
+    print("--------------")
+    print(f"Timestamp : {data.get('timestamp','?')}")
+    print(f"Status    : {color}{status}{reset}")
+    print(f"Runner RC : {data.get('runner_rc','?')}")
+    print(f"Dashboard : {'OK' if data.get('dashboard_ok') else 'FAIL'}")
+    return 0
 
     # Human-readable output
     if not os.path.exists(LAST_RUN):
