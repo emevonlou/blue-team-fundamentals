@@ -72,9 +72,17 @@ def cmd_run(_args):
         dash_ok = False
         dash_msg = str(e)
 
-    # Interpret runner status
+    # interpret runner status
     # Convention: rc==0 success, rc!=0 means findings or script error
-    status = "OK" if rc == 0 else "CRIT"
+    # rc == 0 => OK
+    # rc == 2 => WARN (findings but routine still ran)
+    # rc >= 10 => CRIT (script/runtime errors or critical findings)
+    if rc == 0:
+        status = "OK"
+    elif rc == 2:
+        status = "WARN"
+    else:
+        status = "CRIT"
     write_last_run({
         "ok": (rc == 0),
         "status": status,
