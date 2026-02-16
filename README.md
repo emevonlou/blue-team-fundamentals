@@ -2,89 +2,123 @@
 
 [![CI](https://github.com/emevonlou/blue-team-fundamentals/actions/workflows/ci.yml/badge.svg)](https://github.com/emevonlou/blue-team-fundamentals/actions/workflows/ci.yml)
 
-**Installable agent:** CLI + systemd automation  
-**Use case:** Daily Linux Blue Team routine with reports and dashboard  
-**Status:** Operational  
-**Latest release:** v1.0.3 — Product Packaging & Installer  
+**Status:** Operational & Product-oriented  
+**Latest release:** v1.0.3
 
----
-
-## Overview
-
-Blue Team Fundamentals is a Linux-focused defensive security project that implements a daily operational Blue Team routine.
-
-It combines:
-
-- File integrity monitoring  
-- Authentication log analysis  
-- Service health checks  
-- Automated reporting  
-- Local visual dashboard  
-
-All packaged as an installable agent with CLI interface and systemd automation.
-
-This project reflects real SOC workflows with emphasis on:
-
-- Signal over noise  
-- Least privilege  
-- Operational clarity  
-
----
-
-## Key Features
-
-- File Integrity Monitoring (FIM) with whitelist and exit codes  
-- SSH authentication log monitoring with severity classification  
-- Critical service health checks  
-- Daily master security report generation  
-- Local dashboard (HTML + PNG) with trends and severity levels  
-- Installable CLI (`blueteam`)  
-- Automation via systemd user service + timer  
-- Minimal-privilege sudo configuration  
+Blue Team Fundamentals is a defensive security toolkit for Linux systems.  
+It consolidates fundamental monitoring and defensive checks into a unified CLI and interactive terminal UI.
 
 ---
 
 ## Quick Start
 
-### Run manually
+Install your product (RPM):
+
+```bash
+sudo dnf install blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
+```
+- Verify the package:
+
+```bash
+rpm --checksig blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
+```
+
+- After installation, use the CLI:
+Run daily checks
 
 ```bash
 blueteam run
+```
 
-## Enable automation
+- Show current status:
 
-blueteam enable
-
-## Check status
-
+```bash
 blueteam status
+```
 
-## Terminal UI
+- Launch interactive UI:
 
-- If you prefer a visual interface directly in the terminal:
-
+```bash
 blueteam ui
+```
 
-## Manual Execution (Development Mode)
+- Automate daily runs:
 
-cd scripts-blue-team
-./run_all_security.sh
+```bash
+blueteam enable
+```
 
-## Install via RPM (Fedora)
+### Dashboard Preview
 
--Download the GPG-signed RPM from GitHub Releases.
+- The dashboard is generated automatically after running.
 
-sudo rpm --import docs/blueteam-rpm-publickey.asc
+The HTML report is saved in reports/dashboard_auth.html.
 
-## Install package
+### What’s Inside
 
-sudo dnf install ./blueteam-fundamentals-1.0.3-1.fc40.noarch.rpm
+- Blue Team Fundamentals includes:
 
-## Enable Daily Automation
+File Integrity Monitoring
+Detects unauthorized changes to system files.
 
-systemctl --user enable --now blue-team.timer
-systemctl --user list-timers | grep blue-team
+Authentication Log Monitoring
+Checks for brute-force or unusual login attempts.
 
+Service Health Checks
+Verifies essential service activity and logs.
+
+Terminal UI (TUI)
+An interactive interface to inspect health, logs, and history.
+
+Historical Run Storage
+Saves past statuses in reports/history.
+
+RPM Packaging
+Distributable on Fedora-based systems with signed packages.
+
+### Architecture
+.
+├── docs/                      # Documentation sources
+├── product/                  # Packaging + CLI entrypoint
+├── python-tools/             # Dashboard + UI implementations
+├── scripts-blue-team/        # Security routines
+├── assets/                   # Images, previews
+├── reports/                  # Generated output (local)
+└── README.md                 # This file
+
+### Severity & Exit Codes
+
+To make automation reliable, the runner classifies status using exit codes:
+
+| Exit code | Meaning                       |
+| --------: | ----------------------------- |
+|         0 | OK — checks completed cleanly |
+|         2 | WARN — non-critical findings  |
+|        10 | CRIT — critical findings      |
+
+This ensures consistency across CLI, UI, automation, systemd timers, and logs.
+
+### RPM Installation
+
+```bash
+sudo dnf install blueteam-fundamentals-*.rpm
+```
+- If using custom keys:
+
+```bash
+rpm --import assets/blueteam-rpm-publickey.asc
+```
+
+### License
+
+This project is licensed under the MIT License (see LICENSE for details).
+
+```markdown
 ## Dashboard Preview
 
-assets/dashboard_preview.png
+![BlueTeam Dashboard](assets/dashboard_preview.png)
+
+
+
+
+
