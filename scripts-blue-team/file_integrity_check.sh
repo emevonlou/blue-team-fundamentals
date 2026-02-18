@@ -32,39 +32,36 @@ if [ ! -f "$INTEGRITY_DB" ]; then
 fi
 
 # Verify integrity
-RESULT=$(sha256sum -c "$INTEGRITY_DB" 2>/dev/null)
-
-CHANGES=$(echo "$RESULT" | grep -v "OK$")
+RESULT=$(sha256sum -c "$INTEGRITY_DB" 2>/dev/null || true)
+CHANGES=$(printf "%s\n" "$RESULT" | grep -v "OK$" || true)
 
 if [ -z "$CHANGES" ]; then
     echo "All monitored files are intact."
-else
-    echo "Integrity changes detected!"
-    echo "--------------------------------"
-    echo "$CHANGES" | while read line; do
-        FILE=$(echo "$line" | cut -d ':' -f 1)
-
-        if [ -f "$WHITELIST" ] && grep -qx "$FILE" "$WHITELIST"; then
-            echo "Ignored (whitelisted): $FILE"
-        else
-            echo "Modified file: $FILE"
-
-# Exit code hardening:
-# 0 = clean or whitelisted-only changes
-# 2 = non-whitelisted changes detected
-if echo "$CHANGES" | cut -d ':' -f 1 | while read f; do
-    if [ -f "$WHITELIST" ] && grep -qx "$f" "$WHITELIST"; then
-        true
-    else
-        echo "$f"
-    fi
-done | grep -q .; then
-    exit 2
-else
     exit 0
 fi
 
-     fi
-    done
+echo "Integrity changes detected!"
+echo "--------------------------------"
+
+nonwhitelisted=0
+
+while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    FILE="${line%%:*}"
+
+    if [ -f "$WHITELIST" ] && grep -Fxq "$FILE" "$WHITELIST"; then
+        echo "Ignored (whitelisted): $FILE"
+    else
+        echo "Modified file: $FILE"
+        nonwhitelisted=1
+    fi
+done <<< "$CHANGES"
+
+if [ "$nonwhitelisted" -eq 1 ]; then
+    echo "[CRIT] Integrity changes found (non-whitelisted)."
+    exit 10
+else
+    echo "[OK] Integrity changes were only whitelisted."
+    exit 0
 fi
 

@@ -2,3 +2,20 @@ reports/
 *.sha256
 security_report_*.txt
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor / temp
+*.swp
+*.swo
+*.save
+*.bak
+*.tmp
+
+# Your manual backup patterns
+*.bak.*
+*.save.*
+
+

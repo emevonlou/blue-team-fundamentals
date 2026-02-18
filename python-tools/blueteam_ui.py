@@ -3,14 +3,11 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import datetime
+from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, Header, Static, RichLog
-
-
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config", "blueteam", "config.json")
+from textual.widgets import Button, Header, RichLog, Static
 
 
 def blueteam_path() -> str:
@@ -21,33 +18,28 @@ def run_cmd(cmd: list[str]):
     """Run a command and capture stdout/stderr safely."""
     try:
         p = subprocess.run(cmd, text=True, capture_output=True)
-        return p.returncode, (p.stdout or "").strip(), (p.stderr or "").strip()
+        return p.returncode, (p.stdout or ""), (p.stderr or "")
     except Exception as e:
         return 99, "", str(e)
 
 
 def load_repo_root() -> str:
-    """Read repo_root from config, fallback to dev mode."""
+    """Try to read repo_root from ~/.config/blueteam/config.json, fallback to repo-relative."""
+    cfg = Path.home() / ".config" / "blueteam" / "config.json"
     try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = json.loads(cfg.read_text(encoding="utf-8"))
         rr = data.get("repo_root")
-        if rr and os.path.isdir(rr):
+        if rr and Path(rr).is_dir():
             return rr
     except Exception:
         pass
-    # dev fallback (python-tools/..)
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-
-REPO_ROOT = load_repo_root()
-REPORTS_DIR = os.path.join(REPO_ROOT, "reports")
-HISTORY_DIR = os.path.join(REPORTS_DIR, "history")
-LAST_RUN = os.path.join(REPORTS_DIR, "last_run.json")
+    # fallback: assume we're running inside the repo
+    return str(Path(__file__).resolve().parents[1])
 
 
 class StatusPanel(Static):
     def _risk_bar(self, status: str) -> str:
+        # 10 blocks total
         if status == "OK":
             filled, label = 10, "LOW"
         elif status == "WARN":
@@ -59,7 +51,7 @@ class StatusPanel(Static):
     def set_status(self, data):
         if not data:
             self.remove_class("ok", "warn", "crit")
-            self.update("No status available yet. Run the security routine first.")
+            self.update("No status yet. Run checks first.")
             return
 
         status = data.get("status", "UNKNOWN")
@@ -89,35 +81,58 @@ class StatusPanel(Static):
 
 
 class BlueTeamUI(App):
+    # remove the bottom-right "^p palette"
+    ENABLE_COMMAND_PALETTE = False
+
     CSS = """
     Screen { padding: 1; }
+
+    #wrap { height: 100%; width: 100%; }
 
     #status {
         border: round #666;
         padding: 1;
         height: auto;
+        width: 100%;
     }
 
-    Horizontal { height: auto; }
+    #controls1, #controls2 {
+        height: auto;
+        width: 100%;
+    }
+
+    /* This prevents the giant gap between button rows */
+    #controls1 { margin-bottom: 0; }
+    #controls2 { margin-top: 0; }
+
+    Button { margin: 0 1 0 0; }
 
     #msg {
         border: round #666;
         padding: 1;
         height: auto;
+        width: 100%;
     }
 
     #logview {
         border: round #666;
         padding: 1;
-        height: 18;
+        height: 1fr;
+        min-height: 12;
+        width: 100%;
     }
-
-    Button { margin: 0 1 0 0; }
 
     #status.ok { color: green; }
     #status.warn { color: yellow; }
     #status.crit { color: red; }
     """
+
+    def __init__(self):
+        super().__init__()
+        self.repo_root = load_repo_root()
+        self.reports_dir = os.path.join(self.repo_root, "reports")
+        self.history_dir = os.path.join(self.reports_dir, "history")
+        self._log_timer = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -136,20 +151,17 @@ class BlueTeamUI(App):
                 yield Button("Enable automation", id="enable")
                 yield Button("Disable automation", id="disable")
 
-            yield Static(
-                "Tip: Run checks first. Toggle live logs to see recent service activity + last run output.",
-                id="msg",
-            )
-            yield RichLog(id="logview")
+            yield Static("Tip: Run checks first. Then toggle live logs or show history.", id="msg")
+            yield RichLog(id="logview", auto_scroll=True)
 
     def on_mount(self) -> None:
-        self._log_timer = None
         self.refresh_status()
-        self.set_interval(5, self.refresh_status)
+        self.set_interval(3, self.refresh_status)
 
         log = self.query_one("#logview", RichLog)
-        log.write(f"[ui] BlueTeam UI ready ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})")
-        log.write("[ui] Tip: Click 'Run now' then 'Toggle live logs'.")
+        log.write("BlueTeam UI ready.")
+        log.write(f"repo_root: {self.repo_root}")
+        log.write("Tip: Toggle live logs to stream journalctl + last_run.json tails.")
 
     def refresh_status(self) -> None:
         rc, out, err = run_cmd([blueteam_path(), "status", "--json"])
@@ -164,14 +176,26 @@ class BlueTeamUI(App):
         self.query_one("#status", StatusPanel).set_status(data)
 
         if err.strip():
-            self.query_one("#msg", Static).update(err)
+            self.query_one("#msg", Static).update(err.strip())
 
-    def _read_last_run(self) -> dict:
+    def _read_status_json(self) -> dict | None:
+        rc, out, _ = run_cmd([blueteam_path(), "status", "--json"])
+        if rc != 0 or not out.strip():
+            return None
         try:
-            with open(LAST_RUN, "r", encoding="utf-8") as f:
-                return json.load(f)
+            return json.loads(out)
         except Exception:
-            return {}
+            return None
+
+    def _log_block(self, title: str, body: str, max_lines: int = 120) -> None:
+        log = self.query_one("#logview", RichLog)
+        log.write("")
+        log.write(title)
+        if not body.strip():
+            log.write("(empty)")
+            return
+        for line in body.splitlines()[-max_lines:]:
+            log.write(line.rstrip("\n"))
 
     def start_log_stream(self) -> None:
         if self._log_timer:
@@ -187,89 +211,66 @@ class BlueTeamUI(App):
     def refresh_logs(self) -> None:
         log = self.query_one("#logview", RichLog)
         log.clear()
+        log.write("[live] updating every 2s...")
 
-        log.write("[live] journalctl --user -u blue-team.service (tail)")
+        # 1) journalctl (systemd user service)
         rc, out, err = run_cmd(
             ["journalctl", "--user", "-u", "blue-team.service", "--no-pager", "-n", "80"]
         )
-        log.write(f"[live] rc={rc}")
-        if out.strip():
-            for line in out.splitlines()[-80:]:
-                log.write(line)
-        else:
-            log.write("(no service logs found)")
-            log.write("Tip: run 'blueteam run' or 'systemctl --user start blue-team.service'")
-
+        self._log_block(f"[journalctl] blue-team.service (rc={rc})", out, max_lines=80)
         if err.strip():
-            log.write("")
-            log.write("[journalctl stderr]")
-            for line in err.splitlines()[-20:]:
-                log.write(line)
+            self._log_block("[journalctl stderr]", err, max_lines=40)
 
-        data = self._read_last_run()
+        # 2) last_run.json tails (always helpful)
+        data = self._read_status_json() or {}
         stdout_tail = (data.get("stdout_tail") or "").strip()
         stderr_tail = (data.get("stderr_tail") or "").strip()
-
-        log.write("")
-        log.write("[last_run.json] stdout_tail")
-        if stdout_tail:
-            for line in stdout_tail.splitlines()[-40:]:
-                log.write(line)
-        else:
-            log.write("(empty)")
-
-        log.write("")
-        log.write("[last_run.json] stderr_tail")
-        if stderr_tail:
-            for line in stderr_tail.splitlines()[-40:]:
-                log.write(line)
-        else:
-            log.write("(empty)")
+        self._log_block("[last_run.json] stdout_tail", stdout_tail, max_lines=80)
+        self._log_block("[last_run.json] stderr_tail", stderr_tail, max_lines=80)
 
     def show_history(self) -> None:
         log = self.query_one("#logview", RichLog)
         log.clear()
-        log.write("[history] Recent runs (reports/history)")
+        log.write("[history] recent runs")
 
-        if not os.path.isdir(HISTORY_DIR):
-            log.write("(history dir not found)")
-            log.write(f"Expected: {HISTORY_DIR}")
-            return
-
-        files = sorted(os.listdir(HISTORY_DIR), reverse=True)
-        files = [f for f in files if f.endswith(".json")]
+        os.makedirs(self.history_dir, exist_ok=True)
+        files = sorted(Path(self.history_dir).glob("*.json"), reverse=True)
 
         if not files:
-            log.write("(no history files yet)")
+            log.write("(no history yet)")
+            log.write("Tip: run 'blueteam run' a few times to generate history entries.")
             return
 
-        for filename in files[:10]:
-            path = os.path.join(HISTORY_DIR, filename)
+        shown = 0
+        for fp in files[:15]:
             try:
-                with open(path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                ts = data.get("timestamp", filename.replace(".json", ""))
-                status = data.get("status", "UNKNOWN")
-                rc = data.get("runner_rc", "N/A")
-                dash_ok = data.get("dashboard_ok", None)
-                dash = "OK" if dash_ok is True else "FAIL" if dash_ok is False else "N/A"
-                log.write(f"{ts} | status={status} rc={rc} dash={dash}")
+                data = json.loads(fp.read_text(encoding="utf-8"))
+                ts = data.get("timestamp", fp.stem)
+                st = data.get("status", "UNKNOWN")
+                rc = data.get("runner_rc", "?")
+                log.write(f"{ts} | {st} | rc={rc}")
+                shown += 1
             except Exception as e:
-                log.write(f"{filename} | ERROR: {e}")
+                log.write(f"{fp.name} | ERROR: {e}")
+
+        log.write("")
+        log.write(f"(showing {shown} most recent files in {self.history_dir})")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
 
         if bid == "run":
-            self.query_one("#msg", Static).update("Running checks... (this may take a moment)")
+            self.query_one("#msg", Static).update("Running checks...")
             rc, _, _ = run_cmd([blueteam_path(), "run", "--json"])
             self.refresh_status()
             if rc == 0:
-                self.query_one("#msg", Static).update("OK: checks completed. Reports updated.")
+                self.query_one("#msg", Static).update("Checks passed. (OK)")
             elif rc == 2:
-                self.query_one("#msg", Static).update("WARN: checks completed with findings. Review dashboard/logs.")
+                self.query_one("#msg", Static).update("Warnings detected. (WARN)")
             else:
-                self.query_one("#msg", Static).update("CRIT: errors or critical findings. Review dashboard/logs.")
+                self.query_one("#msg", Static).update("Critical findings detected. (CRIT)")
+            # after running, show logs once
+            self.refresh_logs()
             return
 
         if bid == "refresh":
@@ -292,6 +293,7 @@ class BlueTeamUI(App):
             return
 
         if bid == "history":
+            self.stop_log_stream()
             self.show_history()
             self.query_one("#msg", Static).update("Showing last runs (history).")
             return

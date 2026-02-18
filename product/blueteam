@@ -40,8 +40,22 @@ def ensure_paths():
 def write_last_run(result: dict):
     ensure_paths()
     result["timestamp"] = datetime.now().isoformat(timespec="seconds")
+
+    # Save main last_run.json
     with open(LAST_RUN, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
+
+    # Save historical snapshot
+    history_dir = os.path.join(REPORTS_DIR, "history")
+    os.makedirs(history_dir, exist_ok=True)
+
+    filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.json")
+    history_file = os.path.join(history_dir, filename)
+
+    with open(history_file, "w", encoding="utf-8") as hf:
+        json.dump(result, hf, indent=2)
+
+
 
 def cmd_run(_args):
     ensure_paths()
