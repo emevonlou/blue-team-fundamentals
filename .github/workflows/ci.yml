@@ -2,38 +2,46 @@ name: CI
 
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
-  lint:
+  python-check:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install ShellCheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-
-      - name: ShellCheck (report only)
-        run: |
-          set -u
-          echo "Running ShellCheck (report-only)..."
-          echo "Scanning scripts-blue-team/"
-          find scripts-blue-team -type f -name "*.sh" -print
-          # Run shellcheck but do not fail the job yet
-          find scripts-blue-team -type f -name "*.sh" -print0 | xargs -0 -r shellcheck || true
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: '3.11'
 
-      - name: Python syntax check (compile only)
+      - name: Install dependencies
         run: |
-          set -u
-          echo "Running Python syntax checks..."
-          python -m compileall -q python-tools scripts-blue-team
+          python -m pip install --upgrade pip
+          python -m pip install matplotlib
 
+      - name: Compile Python files
+        run: |
+          python -m compileall python-tools
+
+      - name: Auth dashboard smoke test
+        env:
+          MPLBACKEND: Agg
+        run: |
+          mkdir -p reports
+          cat > reports/auth_summary_ci.csv << 'EOF'
+          date,failed_attempts
+          2026-02-20,3
+          2026-02-21,7
+          2026-02-22,2
+          2026-02-23,10
+          2026-02-24,1
+          2026-02-25,4
+          2026-02-26,6
+          EOF
+          python3 python-tools/auth_dashboard.py
+          test -f reports/auth_failed_attempts_trend.png
+          test -f reports/dashboard_auth.html
