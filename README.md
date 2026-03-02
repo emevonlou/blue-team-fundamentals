@@ -113,11 +113,13 @@ rpm --import assets/blueteam-rpm-publickey.asc
 
 This project is licensed under the MIT License (see LICENSE for details).
 
-```markdown
 ## Dashboard Preview
 
-![BlueTeam Dashboard](assets/dashboard_preview.png)
+The dashboard is generated automatically after running.
 
+- HTML: `reports/dashboard_auth.html`
+
+![BlueTeam Dashboard](assets/dashboard_preview.png)
 
 
 
