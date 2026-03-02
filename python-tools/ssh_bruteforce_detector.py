@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 
-import subprocess
 import re
+import subprocess
 from collections import Counter
 
 THRESHOLD = 5  # attempts per IP
 SERVICE = "sshd"
 
+
 def get_failed_ssh_logs():
     try:
         result = subprocess.run(
-            ["journalctl", "-u", SERVICE, "--no-pager"],
-            capture_output=True,
-            text=True,
-            check=True
+            ["journalctl", "-u", SERVICE, "--no-pager"], capture_output=True, text=True, check=True
         )
         return result.stdout
     except Exception as e:
         print(f"Error reading logs: {e}")
         return ""
 
+
 def extract_ips(logs):
     ip_pattern = r"Failed password.*from ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)"
     return re.findall(ip_pattern, logs)
+
 
 def main():
     logs = get_failed_ssh_logs()
@@ -50,6 +50,7 @@ def main():
         print("\n Possible brute force activity detected.")
     else:
         print("\nNo brute force patterns detected.")
+
 
 if __name__ == "__main__":
     main()

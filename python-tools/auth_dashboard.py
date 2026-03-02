@@ -7,6 +7,9 @@ import os
 from datetime import datetime
 from statistics import mean
 
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 
@@ -155,7 +158,7 @@ def main():
     <p><strong>Latest date:</strong> {latest_date}</p>
     <p><strong>Latest failed attempts:</strong> {latest_value} ({latest_level})</p>
     <p class="muted">
-      Thresholds: LOW ≤ {LOW_MAX}, MEDIUM {LOW_MAX+1}–{MED_MAX}, HIGH ≥ {MED_MAX+1}
+      Thresholds: LOW ≤ {LOW_MAX}, MEDIUM {LOW_MAX + 1}–{MED_MAX}, HIGH ≥ {MED_MAX + 1}
     </p>
     <h2>Trend</h2>
     <p class="muted">Image saved as <code>{os.path.basename(PNG_OUT)}</code> in <code>reports/</code>.</p>

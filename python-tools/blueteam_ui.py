@@ -9,7 +9,6 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Header, RichLog, Static
 
-
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config", "blueteam", "config.json")
 
 
@@ -286,7 +285,9 @@ class BlueTeamUI(App):
             elif rc == 2:
                 self.query_one("#msg", Static).update("Warnings detected. Review logs/dashboard.")
             else:
-                self.query_one("#msg", Static).update("Critical findings detected. Review logs/dashboard.")
+                self.query_one("#msg", Static).update(
+                    "Critical findings detected. Review logs/dashboard."
+                )
 
             # after run, refresh logs once so user sees fresh output
             self.refresh_logs()
@@ -299,7 +300,9 @@ class BlueTeamUI(App):
 
         if bid == "open_dash":
             rc, _, _ = run_cmd([blueteam_path(), "dashboard"])
-            self.query_one("#msg", Static).update("Dashboard opened." if rc == 0 else "Failed to open dashboard.")
+            self.query_one("#msg", Static).update(
+                "Dashboard opened." if rc == 0 else "Failed to open dashboard."
+            )
             return
 
         if bid == "logs":
@@ -319,12 +322,16 @@ class BlueTeamUI(App):
 
         if bid == "enable":
             rc, _, _ = run_cmd([blueteam_path(), "enable"])
-            self.query_one("#msg", Static).update("Automation enabled." if rc == 0 else "Failed to enable automation.")
+            self.query_one("#msg", Static).update(
+                "Automation enabled." if rc == 0 else "Failed to enable automation."
+            )
             return
 
         if bid == "disable":
             rc, _, _ = run_cmd([blueteam_path(), "disable"])
-            self.query_one("#msg", Static).update("Automation disabled." if rc == 0 else "Failed to disable automation.")
+            self.query_one("#msg", Static).update(
+                "Automation disabled." if rc == 0 else "Failed to disable automation."
+            )
             return
 
 
