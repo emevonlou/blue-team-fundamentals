@@ -4,6 +4,7 @@
 import csv
 import glob
 import os
+import json
 from datetime import datetime
 from statistics import mean
 
@@ -12,6 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+
 
 BASE_DIR = os.path.dirname(__file__)
 REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "reports"))
@@ -136,37 +138,141 @@ def main():
     fig.tight_layout()
     fig.savefig(PNG_OUT, dpi=150)
     plt.close(fig)
+    # --- JSON EXPORT ---
+    json_out = os.path.join(REPORTS_DIR, "auth_dashboard.json")
+
+    with open(json_out, "w", encoding="utf-8") as f:
+    	json.dump({
+            "latest_date": latest_date,
+            "latest_failed_attempts": latest_value,
+            "severity": latest_level,
+            "thresholds": {
+            	"low_max": LOW_MAX,
+            	"med_max": MED_MAX
+            }
+    	}, f, indent=2)
 
     # Simple HTML report (local)
     html = f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Auth Dashboard</title>
-  <style>
-    body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif; margin: 24px; }}
-    code {{ background: #f5f5f5; padding: 2px 6px; border-radius: 6px; }}
-    .card {{ border: 1px solid #ddd; border-radius: 12px; padding: 12px; max-width: 860px; }}
-    img {{ max-width: 100%; border: 1px solid #eee; border-radius: 12px; padding: 6px; }}
-    .muted {{ color: #666; }}
-  </style>
+	<html lang="en">
+	<head>
+	<meta charset="utf-8" />
+	<title>Auth Dashboard</title>
+	<style>
+  	body {{
+    	background: #0f1117;
+    	color: #e6edf3;
+    	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
+    	margin: 24px;
+  	}}
+
+  	h1 {{
+    		margin-bottom: 10px;
+  	}}
+
+  	h2 {{
+    		margin-top: 24px;
+    		margin-bottom: 10px;
+  	}}
+
+  	.card {{
+    	background: #161b22;
+    	border: 1px solid #30363d;
+    	border-radius: 12px;
+    	padding: 16px;
+    	max-width: 900px;
+  	}}
+
+  	.metrics {{
+    	display: flex;
+    	gap: 24px;
+    	margin-top: 12px;
+    	margin-bottom: 12px;
+    	flex-wrap: wrap;
+  	}}
+
+  	.metric-box {{
+    	background: #0d1117;
+    	border: 1px solid #30363d;
+    	border-radius: 10px;
+    	padding: 14px 18px;
+    	min-width: 180px;
+  	}}
+
+  	.metric-label {{
+    	color: #8b949e;
+    	font-size: 14px;
+    	margin-bottom: 6px;
+  	}}
+
+  	.metric-value {{
+    	font-size: 28px;
+    	font-weight: bold;
+  	}}
+
+  	.low {{
+    	color: #2ea043;
+  	}}
+
+  	.medium {{
+    	color: #d29922;
+  	}}
+
+  	.high {{
+    	color: #f85149;
+  	}}
+
+  	img {{
+    	max-width: 100%;
+    	border-radius: 10px;
+    	margin-top: 10px;
+    	border: 1px solid #30363d;
+  	}}
+
+  	code {{
+    	background: #21262d;
+    	padding: 3px 6px;
+    	border-radius: 6px;
+  	}}
+
+  	.muted {{
+    	color: #8b949e;
+  	}}
+</style>
 </head>
 <body>
-  <h1>Auth Dashboard</h1>
 
-  <div class="card">
-    <p><strong>Latest date:</strong> {latest_date}</p>
-    <p><strong>Latest failed attempts:</strong> {latest_value} ({latest_level})</p>
-    <p class="muted">
-      Thresholds: LOW ≤ {LOW_MAX}, MEDIUM {LOW_MAX + 1}–{MED_MAX}, HIGH ≥ {MED_MAX + 1}
-    </p>
-    <h2>Trend</h2>
-    <p class="muted">Image saved as <code>{os.path.basename(PNG_OUT)}</code> in <code>reports/</code>.</p>
-    <p><img src="{os.path.basename(PNG_OUT)}" alt="Auth trend"></p>
+<h1>Authentication Dashboard</h1>
 
-    <h2>Data source</h2>
-    <p>Reads <code>reports/auth_summary_*.csv</code>.</p>
+<div class="card">
+
+  <h2>Summary</h2>
+
+  <p><strong>Date:</strong> {latest_date}</p>
+
+  <div class="metrics">
+    <div class="metric-box">
+      <div class="metric-label">Failed Attempts</div>
+      <div class="metric-value {latest_level.lower()}">{latest_value}</div>
+    </div>
+
+    <div class="metric-box">
+      <div class="metric-label">Severity</div>
+      <div class="metric-value {latest_level.lower()}">{latest_level}</div>
+    </div>
   </div>
+
+  <p class="muted">
+    LOW ≤ {LOW_MAX} | MED ≤ {MED_MAX} | HIGH &gt; {MED_MAX}
+  </p>
+
+  <h2>Trend</h2>
+  <p><img src="{os.path.basename(PNG_OUT)}" alt="Authentication trend"></p>
+
+  <h2>Data Source</h2>
+  <p class="muted">reports/auth_summary_*.csv</p>
+</div>
+
 </body>
 </html>
 """
