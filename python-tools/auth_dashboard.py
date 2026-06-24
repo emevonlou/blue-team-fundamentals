@@ -3,8 +3,8 @@
 
 import csv
 import glob
-import os
 import json
+import os
 from datetime import datetime
 from statistics import mean
 
@@ -13,7 +13,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-
 
 BASE_DIR = os.path.dirname(__file__)
 REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "reports"))
@@ -142,102 +141,103 @@ def main():
     json_out = os.path.join(REPORTS_DIR, "auth_dashboard.json")
 
     with open(json_out, "w", encoding="utf-8") as f:
-    	json.dump({
-            "latest_date": latest_date,
-            "latest_failed_attempts": latest_value,
-            "severity": latest_level,
-            "thresholds": {
-            	"low_max": LOW_MAX,
-            	"med_max": MED_MAX
-            }
-    	}, f, indent=2)
+        json.dump(
+            {
+                "latest_date": latest_date,
+                "latest_failed_attempts": latest_value,
+                "severity": latest_level,
+                "thresholds": {"low_max": LOW_MAX, "med_max": MED_MAX},
+            },
+            f,
+            indent=2,
+        )
 
     # Simple HTML report (local)
     html = f"""<!doctype html>
-	<html lang="en">
-	<head>
-	<meta charset="utf-8" />
-	<title>Auth Dashboard</title>
-	<style>
-  	body {{
-    	background: #0f1117;
-    	color: #e6edf3;
-    	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
-    	margin: 24px;
-  	}}
+    <html lang="en">
+    <head>
+    <meta charset="utf-8" />
+    <title>Auth Dashboard</title>
+    <style>
+      body {{
+        background: #0f1117;
+        color: #e6edf3;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
+        margin: 24px;
+      }}
 
-  	h1 {{
-    		margin-bottom: 10px;
-  	}}
+      h1 {{
+            margin-bottom: 10px;
+      }}
 
-  	h2 {{
-    		margin-top: 24px;
-    		margin-bottom: 10px;
-  	}}
+      h2 {{
+            margin-top: 24px;
+            margin-bottom: 10px;
+      }}
 
-  	.card {{
-    	background: #161b22;
-    	border: 1px solid #30363d;
-    	border-radius: 12px;
-    	padding: 16px;
-    	max-width: 900px;
-  	}}
+      .card {{
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 16px;
+        max-width: 900px;
+      }}
 
-  	.metrics {{
-    	display: flex;
-    	gap: 24px;
-    	margin-top: 12px;
-    	margin-bottom: 12px;
-    	flex-wrap: wrap;
-  	}}
+      .metrics {{
+        display: flex;
+        gap: 24px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }}
 
-  	.metric-box {{
-    	background: #0d1117;
-    	border: 1px solid #30363d;
-    	border-radius: 10px;
-    	padding: 14px 18px;
-    	min-width: 180px;
-  	}}
+      .metric-box {{
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 14px 18px;
+        min-width: 180px;
+      }}
 
-  	.metric-label {{
-    	color: #8b949e;
-    	font-size: 14px;
-    	margin-bottom: 6px;
-  	}}
+      .metric-label {{
+        color: #8b949e;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }}
 
-  	.metric-value {{
-    	font-size: 28px;
-    	font-weight: bold;
-  	}}
+      .metric-value {{
+        font-size: 28px;
+        font-weight: bold;
+      }}
 
-  	.low {{
-    	color: #2ea043;
-  	}}
+      .low {{
+        color: #2ea043;
+      }}
 
-  	.medium {{
-    	color: #d29922;
-  	}}
+      .medium {{
+        color: #d29922;
+      }}
 
-  	.high {{
-    	color: #f85149;
-  	}}
+      .high {{
+        color: #f85149;
+      }}
 
-  	img {{
-    	max-width: 100%;
-    	border-radius: 10px;
-    	margin-top: 10px;
-    	border: 1px solid #30363d;
-  	}}
+      img {{
+        max-width: 100%;
+        border-radius: 10px;
+        margin-top: 10px;
+        border: 1px solid #30363d;
+      }}
 
-  	code {{
-    	background: #21262d;
-    	padding: 3px 6px;
-    	border-radius: 6px;
-  	}}
+      code {{
+        background: #21262d;
+        padding: 3px 6px;
+        border-radius: 6px;
+      }}
 
-  	.muted {{
-    	color: #8b949e;
-  	}}
+      .muted {{
+        color: #8b949e;
+      }}
 </style>
 </head>
 <body>
